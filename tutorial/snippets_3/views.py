@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import renderers
+from rest_framework import viewsets
+from rest_framework.decorators import action
 
 
 @api_view(["GET"])
@@ -29,17 +31,47 @@ class SnippetHighlight(generics.GenericAPIView):
         return Response(snippet.highlighted)
 
 
-class UserList(generics.ListAPIView):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `retrieve` actions.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+'''class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserSerializer'''
 
 
-class SnippetList(generics.ListCreateAPIView):
+class SnippetViewSet(viewsets.ModelViewSet):
+    """
+    This ViewSet automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    Additionally we also provide an extra `highlight` action.
+    """
+
+    queryset = Snippet_3.objects.all()
+    serializer_class = SnippetSerializer_3
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+'''class SnippetList(generics.ListCreateAPIView):
     queryset = Snippet_3.objects.all()
     serializer_class = SnippetSerializer_3
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -68,6 +100,6 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
             context=context
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(owner=self.request.user)
+        serializer.save(owner=self.request.user)'''
 
 
